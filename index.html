@@ -1,0 +1,225 @@
+<!DOCTYPE html>  <html lang="en">  
+<head>  
+  <meta charset="UTF-8">  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+  <title> @..joel-xmd-yt-dl-all...&</title>    <!-- Favicon / Icon -->    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/joeljamestech2/JOEL-XMD/refs/heads/main/mydata/media/joelXtec.jpg" />    <!-- Open Graph / Social Meta Tags -->    <meta property="og:title" content="joel xmd api" />  
+  <meta property="og:description" content="a powerful yt dl website made by joeljamestech tech." />  
+  <meta property="og:url" content="https://github.com/joeljamestech2/" />  
+  <meta property="og:image" content="https://raw.githubusercontent.com/joeljamestech2/JOEL-XMD/refs/heads/main/mydata/media/joelXtec.jpg" />    <meta name="twitter:card" content="summary_large_image" />  
+  <meta name="twitter:title" content="ʝσєℓ-χм∂ " />  
+  <meta name="twitter:description" content="yt dl website by joeljamestech." />  
+  <meta name="twitter:image" content="https://raw.githubusercontent.com/joeljamestech2/JOEL-XMD/refs/heads/main/mydata/media/joelXtec.jpg" />    <!-- Fonts & Icons -->    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet" />  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />  
+</head>  
+  <style>  
+    body {  
+      margin: 0;  
+      font-family: 'JetBrains Mono', monospace;  
+      background: #000;  
+      color: #fff;  
+      padding: 1rem;  
+      text-align: center;  
+    }  h1 {  
+  font-size: 1.4rem;  
+  color: #00d9ff;  
+  margin-bottom: 1rem;  
+}  
+
+.search-container {  
+  display: flex;  
+  align-items: center;  
+  justify-content: center;  
+  background-color: #111;  
+  border-radius: 25px;  
+  padding: 8px 12px;  
+  max-width: 600px;  
+  margin: 0 auto;  
+  height: 30px;  
+}  
+
+.material-icons { font-size: 22px; }  
+
+.back-arrow {  
+  color: #ccc;  
+  cursor: pointer;  
+  margin-right: 10px;  
+}  
+
+.search-input {  
+  flex: 1;  
+  border: none;  
+  background: transparent;  
+  outline: none;  
+  font-size: 0.95rem;  
+  color: #fff;  
+}  
+
+.icon-button {  
+  background-color: #222;  
+  border-radius: 50%;  
+  width: 46px;  
+  height: 36px;  
+  display: flex;  
+  align-items: center;  
+  justify-content: center;  
+  margin-left: 8px;  
+  cursor: pointer;  
+}  
+
+.icon-button:hover { background-color: #333; }  
+
+.results {  
+  margin-top: 1.5rem;  
+  display: flex;  
+  flex-direction: column;  
+  gap: 1rem;  
+}  
+
+.card {  
+  background: #111;  
+  border-radius: 8px;  
+  padding: 0.5rem;  
+  text-align: left;  
+  font-size: 0.85rem;  
+}  
+
+.card img {  
+  width: 100%;  
+  border-radius: 4px;  
+}  
+
+.meta p {  
+  margin: 3px 0;  
+  color: #ccc;  
+}  
+
+.actions {  
+  margin-top: 0.5rem;  
+  display: flex;  
+  flex-wrap: wrap;  
+  gap: 0.4rem;  
+}  
+
+.actions button {  
+  background: #00d9ff;  
+  color: #000;  
+  padding: 0.3rem 0.6rem;  
+  font-weight: bold;  
+  font-size: 0.75rem;  
+  border-radius: 6px;  
+  cursor: pointer;  
+}  
+
+.error {  
+  color: red;  
+  margin-top: 0.5rem;  
+  font-size: 0.85rem;  
+}  
+
+.loading {  
+  font-size: 0.8rem;  
+  color: #00d9ff;  
+  margin-top: 5px;  
+}
+
+  </style>  
+</head>  
+<body>  <h1>JOEL XMD YT DOWNLOADER</h1>  <div class="search-container">  
+  <span class="material-icons back-arrow" onclick="window.location.href='https://joel-xmd-downloader.vercel.app/youtube'">arrow_back</span>  
+  <input class="search-input" id="query" placeholder="Enter search term or YouTube url" />  
+  <div class="icon-button" onclick="searchVideos()">  
+    <span class="material-icons">search</span>  
+  </div>  
+  <div class="icon-button">  
+    <span class="material-icons">mic</span>  
+  </div>  
+</div>  <div class="error" id="error"></div>  
+<div class="results" id="results"></div>  <script>  
+const input = document.getElementById("query");  
+const results = document.getElementById("results");  
+const error = document.getElementById("error");  
+  
+// 🔥 AUTO SEARCH ON PAGE LOAD  
+window.addEventListener("load", () => {  
+  input.value = "trending musics";  
+  searchVideos();  
+});  
+  
+input.addEventListener("keydown", e => {  
+  if (e.key === "Enter") searchVideos();  
+});  
+  
+async function searchVideos() {  
+  const query = input.value.trim();  
+  results.innerHTML = '';  
+  error.textContent = '';  
+  
+  if (!query) return;  
+  
+  const loading = document.createElement("div");  
+  loading.className = "loading";  
+  loading.textContent = "Searching trending musics...";  
+  results.appendChild(loading);  
+  
+  try {  
+    const api = `https://corsproxy.io/?${encodeURIComponent(  
+      `https://my-rest-apis-six.vercel.app/yts?query=${encodeURIComponent(query)}`  
+    )}`;  
+  
+    const res = await fetch(api);  
+    const json = await res.json();  
+    results.innerHTML = '';  
+  
+    if (!json.results || json.results.length === 0) {  
+      error.textContent = "❌ No results found.";  
+      return;  
+    }  
+  
+    // ✅ EXACTLY 20 RESULTS  
+    json.results.slice(0, 20).forEach(video => {  
+      const card = document.createElement("div");  
+      card.className = "card";  
+      card.innerHTML = `  
+        <img src="${video.thumbnail}">  
+        <div class="meta">  
+          <p><strong>${video.title}</strong></p>  
+          <p>${video.author}</p>  
+          <p>${video.duration}</p>  
+        </div>  
+        <div class="actions">  
+          <button onclick="downloadMedia('${video.url}','mp3',this)">download audio</button>  
+          <button onclick="downloadMedia('${video.url}','mp4',this)">download video</button>  
+        </div>  
+      `;  
+      results.appendChild(card);  
+    });  
+  
+  } catch {  
+    error.textContent = "❌ Failed to fetch videos.";  
+  }  
+}  
+  
+async function downloadMedia(url, format, button) {  
+  button.disabled = true;  
+  
+  try {  
+    const api = `https://corsproxy.io/?${encodeURIComponent(  
+      `https://iamtkm.vercel.app/downloaders/yt${format}?apikey=tkm&url=${encodeURIComponent(url)}`  
+    )}`;  
+  
+    const res = await fetch(api);  
+    const json = await res.json();  
+  
+    if (json?.status && json?.data?.url) {  
+      window.location.href = json.data.url;  
+    } else {  
+      alert("❌ Download failed");  
+    }  
+  } catch {  
+    alert("❌ Error downloading");  
+  } finally {  
+    button.disabled = false;  
+  }  
+}  
+</script>  </body>  
+  </html>
