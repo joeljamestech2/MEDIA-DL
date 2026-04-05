@@ -10,7 +10,7 @@
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet">
 
-<!-- Icons FIXED -->
+<!-- Icons FIX -->
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
 <style>
@@ -44,19 +44,24 @@ h1 {
   background: transparent;
   color: #fff;
   outline: none;
-  padding: 8px;
+  padding: 10px;
+  font-size: 0.95rem;
 }
 
 .icon-button {
   background: #222;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-left: 6px;
   cursor: pointer;
+}
+
+.icon-button:hover {
+  background: #333;
 }
 
 .results {
@@ -68,6 +73,7 @@ h1 {
   border-radius: 10px;
   padding: 10px;
   margin-bottom: 15px;
+  text-align: left;
 }
 
 .card img {
@@ -75,23 +81,41 @@ h1 {
   border-radius: 6px;
 }
 
+.meta p {
+  margin: 4px 0;
+  font-size: 0.85rem;
+  color: #ccc;
+}
+
+.actions {
+  margin-top: 8px;
+}
+
 .actions button {
-  margin-top: 6px;
   margin-right: 5px;
-  padding: 5px 10px;
+  padding: 6px 10px;
   border: none;
   background: #00d9ff;
   color: #000;
   border-radius: 6px;
   cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .loading {
   color: #00d9ff;
+  margin-top: 10px;
 }
 
 .error {
   color: red;
+  margin-top: 10px;
 }
 </style>
 </head>
@@ -102,7 +126,7 @@ h1 {
 
 <div class="search-container">
   <input id="query" class="search-input" placeholder="Search or paste YouTube URL">
-  
+
   <div class="icon-button" onclick="searchVideos()">
     <span class="material-icons">search</span>
   </div>
@@ -116,35 +140,38 @@ const input = document.getElementById("query");
 const results = document.getElementById("results");
 const error = document.getElementById("error");
 
-// AUTO LOAD
+// AUTO LOAD TRENDING
 window.onload = () => {
   input.value = "trending music";
   searchVideos();
 };
 
+// ENTER KEY SEARCH
 input.addEventListener("keydown", e => {
   if (e.key === "Enter") searchVideos();
 });
 
+// SEARCH FUNCTION
 async function searchVideos() {
   const query = input.value.trim();
   if (!query) return;
 
-  results.innerHTML = '<div class="loading">Searching...</div>';
+  results.innerHTML = '<div class="loading">🔍 Searching...</div>';
   error.textContent = "";
 
   try {
-    const api = `https://corsproxy.io/?${encodeURIComponent(
-      `https://my-rest-apis-six.vercel.app/yts?query=${query}`
-    )}`;
+    const api = `https://my-rest-apis-six.vercel.app/yts?query=${encodeURIComponent(query)}`;
 
     const res = await fetch(api);
+
+    if (!res.ok) throw new Error("API ERROR");
+
     const json = await res.json();
 
     results.innerHTML = "";
 
-    if (!json?.results?.length) {
-      error.textContent = "No results found";
+    if (json.status !== "success" || !json.results?.length) {
+      error.textContent = "❌ No results found";
       return;
     }
 
@@ -153,10 +180,12 @@ async function searchVideos() {
       card.className = "card";
 
       card.innerHTML = `
-        <img src="${video.thumbnail || ''}">
-        <p><b>${video.title || 'No title'}</b></p>
-        <p>${video.author || 'Unknown'}</p>
-        <p>${video.duration || ''}</p>
+        <img src="${video.thumbnail}">
+        <div class="meta">
+          <p><strong>${video.title}</strong></p>
+          <p>👤 ${video.author}</p>
+          <p>⏱ ${video.duration} • 👁 ${video.views?.toLocaleString() || "N/A"}</p>
+        </div>
 
         <div class="actions">
           <button onclick="downloadMedia('${video.url}','mp3',this)">MP3</button>
@@ -168,18 +197,19 @@ async function searchVideos() {
     });
 
   } catch (err) {
-    error.textContent = "Failed to fetch videos";
+    console.error(err);
+    error.textContent = "❌ Failed to fetch videos. Try again.";
   }
 }
 
+// DOWNLOAD FUNCTION
 async function downloadMedia(url, format, btn) {
   btn.disabled = true;
+  const originalText = btn.innerText;
   btn.innerText = "Loading...";
 
   try {
-    const api = `https://corsproxy.io/?${encodeURIComponent(
-      `https://iamtkm.vercel.app/downloaders/yt${format}?url=${url}`
-    )}`;
+    const api = `https://iamtkm.vercel.app/downloaders/yt${format}?url=${encodeURIComponent(url)}`;
 
     const res = await fetch(api);
     const json = await res.json();
@@ -187,15 +217,15 @@ async function downloadMedia(url, format, btn) {
     if (json?.data?.url) {
       window.open(json.data.url, "_blank");
     } else {
-      alert("Download failed");
+      alert("❌ Download failed");
     }
 
-  } catch {
-    alert("Error downloading");
+  } catch (err) {
+    alert("❌ Error downloading");
   }
 
   btn.disabled = false;
-  btn.innerText = format.toUpperCase();
+  btn.innerText = originalText;
 }
 </script>
 
