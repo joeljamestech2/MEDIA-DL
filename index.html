@@ -129,7 +129,7 @@ h1 {
 <div id="results" class="results"></div>
 
 <script>
-// 🔥 GLOBAL FALLBACK SYSTEM
+// 🔥 FALLBACK SYSTEM FOR SEARCH ONLY
 const proxies = [
   url => url,
   url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
@@ -157,12 +157,12 @@ window.onload = () => {
   searchVideos();
 };
 
-// ENTER KEY
+// ENTER KEY SEARCH
 input.addEventListener("keydown", e => {
   if (e.key === "Enter") searchVideos();
 });
 
-// 🔍 SEARCH
+// 🔍 SEARCH FUNCTION
 async function searchVideos() {
   const query = input.value.trim();
   if (!query) return;
@@ -208,29 +208,27 @@ async function searchVideos() {
   }
 }
 
-// 📥 DOWNLOAD
-async function downloadMedia(url, format, btn) {
+// 📥 DOWNLOAD (FINAL FIX)
+function downloadMedia(url, format, btn) {
   btn.disabled = true;
   const original = btn.innerText;
-  btn.innerText = "Loading...";
+  btn.innerText = "Opening...";
 
   try {
-    const api = `https://iamtkm.vercel.app/downloaders/yt${format}?url=${encodeURIComponent(url)}`;
-    const data = await fetchWithFallback(api);
+    const apiUrl = `https://iamtkm.vercel.app/downloaders/yt${format}?url=${encodeURIComponent(url)}`;
 
-    if (data?.data?.url) {
-      window.open(data.data.url, "_blank");
-    } else {
-      alert("❌ Download failed");
-    }
+    // ✅ DIRECT OPEN (NO FETCH = NO CORS PROBLEM)
+    window.open(apiUrl, "_blank");
 
   } catch (err) {
     console.error(err);
-    alert("❌ Download error (CORS/API)");
+    alert("❌ Failed to open download");
   }
 
-  btn.disabled = false;
-  btn.innerText = original;
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.innerText = original;
+  }, 2000);
 }
 </script>
 
