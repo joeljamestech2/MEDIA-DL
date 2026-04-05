@@ -5,12 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JOEL XMD YT DOWNLOADER</title>
 
-<link rel="icon" href="https://raw.githubusercontent.com/joeljamestech2/JOEL-XMD/refs/heads/main/mydata/media/joelXtec.jpg">
-
-<!-- Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet">
-
-<!-- Icons FIX -->
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
 <style>
@@ -23,14 +18,8 @@ body {
   text-align: center;
 }
 
-h1 {
-  color: #00d9ff;
-  font-size: 1.3rem;
-}
-
 .search-container {
   display: flex;
-  align-items: center;
   background: #111;
   border-radius: 30px;
   padding: 8px;
@@ -44,189 +33,121 @@ h1 {
   background: transparent;
   color: #fff;
   outline: none;
-  padding: 10px;
-  font-size: 0.95rem;
 }
 
 .icon-button {
   background: #222;
   border-radius: 50%;
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: 6px;
   cursor: pointer;
 }
 
-.icon-button:hover {
-  background: #333;
-}
+.results { margin-top: 20px; }
+.card { background: #111; padding: 10px; margin-bottom: 10px; border-radius: 10px; }
+.card img { width: 100%; border-radius: 6px; }
 
-.results {
-  margin-top: 20px;
-}
-
-.card {
-  background: #111;
-  border-radius: 10px;
-  padding: 10px;
-  margin-bottom: 15px;
-  text-align: left;
-}
-
-.card img {
-  width: 100%;
-  border-radius: 6px;
-}
-
-.meta p {
-  margin: 4px 0;
-  font-size: 0.85rem;
-  color: #ccc;
-}
-
-.actions {
-  margin-top: 8px;
-}
-
-.actions button {
-  margin-right: 5px;
-  padding: 6px 10px;
-  border: none;
+button {
+  margin-top: 5px;
+  padding: 5px 10px;
   background: #00d9ff;
-  color: #000;
+  border: none;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.75rem;
-  font-weight: bold;
-}
-
-.actions button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.loading {
-  color: #00d9ff;
-  margin-top: 10px;
-}
-
-.error {
-  color: red;
-  margin-top: 10px;
 }
 </style>
 </head>
 
 <body>
 
-<h1>JOEL XMD YT DOWNLOADER</h1>
+<h2>JOEL XMD DOWNLOADER</h2>
 
 <div class="search-container">
-  <input id="query" class="search-input" placeholder="Search or paste YouTube URL">
-
+  <input id="query" class="search-input" placeholder="Search YouTube...">
   <div class="icon-button" onclick="searchVideos()">
     <span class="material-icons">search</span>
   </div>
 </div>
 
-<div id="error" class="error"></div>
-<div id="results" class="results"></div>
+<div id="results"></div>
 
 <script>
-const input = document.getElementById("query");
-const results = document.getElementById("results");
-const error = document.getElementById("error");
+const proxies = [
+  url => url, // direct
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`
+];
 
-// AUTO LOAD TRENDING
-window.onload = () => {
-  input.value = "trending music";
-  searchVideos();
-};
+async function fetchWithFallback(url) {
+  for (let proxy of proxies) {
+    try {
+      const res = await fetch(proxy(url));
+      if (!res.ok) continue;
+      return await res.json();
+    } catch {}
+  }
+  throw new Error("All fetch methods failed");
+}
 
-// ENTER KEY SEARCH
-input.addEventListener("keydown", e => {
-  if (e.key === "Enter") searchVideos();
-});
-
-// SEARCH FUNCTION
 async function searchVideos() {
-  const query = input.value.trim();
+  const query = document.getElementById("query").value.trim();
+  const results = document.getElementById("results");
+
   if (!query) return;
 
-  results.innerHTML = '<div class="loading">🔍 Searching...</div>';
-  error.textContent = "";
+  results.innerHTML = "🔍 Searching...";
 
   try {
     const api = `https://my-rest-apis-six.vercel.app/yts?query=${encodeURIComponent(query)}`;
-
-    const res = await fetch(api);
-
-    if (!res.ok) throw new Error("API ERROR");
-
-    const json = await res.json();
+    const data = await fetchWithFallback(api);
 
     results.innerHTML = "";
 
-    if (json.status !== "success" || !json.results?.length) {
-      error.textContent = "❌ No results found";
+    if (!data.results) {
+      results.innerHTML = "❌ No results";
       return;
     }
 
-    json.results.slice(0, 20).forEach(video => {
-      const card = document.createElement("div");
-      card.className = "card";
-
-      card.innerHTML = `
-        <img src="${video.thumbnail}">
-        <div class="meta">
-          <p><strong>${video.title}</strong></p>
-          <p>👤 ${video.author}</p>
-          <p>⏱ ${video.duration} • 👁 ${video.views?.toLocaleString() || "N/A"}</p>
-        </div>
-
-        <div class="actions">
-          <button onclick="downloadMedia('${video.url}','mp3',this)">MP3</button>
-          <button onclick="downloadMedia('${video.url}','mp4',this)">MP4</button>
+    data.results.slice(0, 10).forEach(v => {
+      results.innerHTML += `
+        <div class="card">
+          <img src="${v.thumbnail}">
+          <p><b>${v.title}</b></p>
+          <p>${v.author}</p>
+          <button onclick="download('${v.url}','mp3')">MP3</button>
+          <button onclick="download('${v.url}','mp4')">MP4</button>
         </div>
       `;
-
-      results.appendChild(card);
     });
 
   } catch (err) {
-    console.error(err);
-    error.textContent = "❌ Failed to fetch videos. Try again.";
+    results.innerHTML = "❌ API blocked (CORS issue)";
   }
 }
 
-// DOWNLOAD FUNCTION
-async function downloadMedia(url, format, btn) {
-  btn.disabled = true;
-  const originalText = btn.innerText;
-  btn.innerText = "Loading...";
-
+async function download(url, format) {
   try {
     const api = `https://iamtkm.vercel.app/downloaders/yt${format}?url=${encodeURIComponent(url)}`;
+    const data = await fetchWithFallback(api);
 
-    const res = await fetch(api);
-    const json = await res.json();
-
-    if (json?.data?.url) {
-      window.open(json.data.url, "_blank");
+    if (data?.data?.url) {
+      window.open(data.data.url);
     } else {
-      alert("❌ Download failed");
+      alert("Download failed");
     }
-
-  } catch (err) {
-    alert("❌ Error downloading");
+  } catch {
+    alert("Download error");
   }
-
-  btn.disabled = false;
-  btn.innerText = originalText;
 }
+
+// AUTO LOAD
+window.onload = () => {
+  document.getElementById("query").value = "trending music";
+  searchVideos();
+};
 </script>
 
 </body>
