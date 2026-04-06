@@ -9,303 +9,219 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
-:root {
-  --neon-blue: #00d9ff;
-  --bg-dark: #0a0a0a;
-  --card-bg: #111;
-  --text-light: #eee;
-  --btn-bg: #00d9ff;
-  --btn-color: #000;
-  --bar-bg: #222;
-  --bar-fill: #00d9ff;
-}
-
-* { box-sizing: border-box; margin:0; padding:0; }
-
 body {
+  margin: 0;
   font-family: 'JetBrains Mono', monospace;
-  background: var(--bg-dark);
-  color: var(--text-light);
-  padding: 20px;
-}
-
-h1 {
+  background: #000;
+  color: #fff;
+  padding: 1rem;
   text-align: center;
-  color: var(--neon-blue);
-  margin-bottom: 20px;
 }
 
 .search-container {
   display: flex;
+  background: #111;
+  border-radius: 30px;
+  padding: 8px;
   max-width: 600px;
-  margin: 0 auto 30px auto;
-  background: var(--card-bg);
-  border-radius: 50px;
-  overflow: hidden;
-  box-shadow: 0 0 15px rgba(0,217,255,0.3);
+  margin: auto;
 }
 
 .search-input {
   flex: 1;
   border: none;
-  padding: 12px 20px;
   background: transparent;
-  color: var(--text-light);
-  font-size: 1rem;
+  color: #fff;
   outline: none;
 }
 
 .icon-button {
-  width: 50px;
+  background: #222;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--card-bg);
   cursor: pointer;
-  transition: 0.2s;
 }
 
-.icon-button:hover {
-  background: rgba(0,217,255,0.2);
-}
-
-.results {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-}
+.results { margin-top: 20px; }
 
 .card {
-  background: var(--card-bg);
-  border-radius: 15px;
-  overflow: hidden;
-  box-shadow: 0 0 20px rgba(0,217,255,0.2);
-  transition: transform 0.2s, box-shadow 0.2s;
-  position: relative;
-}
-
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 0 25px rgba(0,217,255,0.5);
+  background: #111;
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  text-align: left;
 }
 
 .card img {
   width: 100%;
-  display: block;
-}
-
-.meta {
-  padding: 10px;
-}
-
-.meta p {
-  margin: 5px 0;
-  font-size: 0.9rem;
-  color: #ccc;
-}
-
-.actions {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px;
+  border-radius: 6px;
 }
 
 button {
-  flex: 1;
-  margin: 0 5px;
-  padding: 8px 0;
+  margin-top: 5px;
+  padding: 6px 10px;
+  background: #00d9ff;
   border: none;
-  border-radius: 8px;
-  background: var(--btn-bg);
-  color: var(--btn-color);
-  font-weight: bold;
+  border-radius: 6px;
   cursor: pointer;
-  transition: 0.2s;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 5px;
 }
 
-button:hover {
-  background: rgba(0,217,255,0.8);
+/* 🔽 DOWNLOAD BAR */
+.download-box {
+  margin-top: 6px;
 }
 
-.error, .loading {
-  text-align: center;
-  margin: 20px;
-  color: var(--neon-blue);
-  font-size: 0.9rem;
-}
-
-.download-bar {
+.bar {
   height: 6px;
-  background: var(--bar-bg);
+  background: #222;
   border-radius: 5px;
   overflow: hidden;
-  margin-top: 5px;
-  display: flex;
-  align-items: center;
-  font-size: 0.75rem;
 }
 
-.download-fill {
+.fill {
   height: 100%;
   width: 0%;
-  background: var(--bar-fill);
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
+  background: #00d9ff;
+  font-size: 10px;
+  text-align: right;
   padding-right: 5px;
   color: #000;
-  font-weight: bold;
-  border-radius: 5px;
-}
-
-.download-container {
-  margin-top: 5px;
 }
 </style>
 </head>
+
 <body>
 
-<h1>JOEL XMD YT DOWNLOADER</h1>
+<h2>JOEL XMD DOWNLOADER</h2>
 
 <div class="search-container">
-  <input id="query" class="search-input" placeholder="Search YouTube or paste URL">
+  <input id="query" class="search-input" placeholder="Search YouTube...">
   <div class="icon-button" onclick="searchVideos()">
     <i class="fa fa-search"></i>
   </div>
 </div>
 
 <div id="results"></div>
-<div id="error" class="error"></div>
 
 <script>
-// Safe fetch with timeout
-async function fetchWithTimeout(url, timeout = 10000) {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
+// 🔥 fallback system (KEEP THIS - it's why yours worked)
+const proxies = [
+  url => url,
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+];
 
-  try {
-    const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-    const res = await fetch(proxy, { signal: controller.signal });
-    clearTimeout(id);
-    if (!res.ok) throw new Error("Fetch failed");
-    return await res.json();
-  } catch(e) {
-    clearTimeout(id);
-    throw e;
+async function fetchSafe(url) {
+  for (let p of proxies) {
+    try {
+      const res = await fetch(p(url));
+      if (!res.ok) continue;
+      return await res.json();
+    } catch {}
   }
+  throw new Error("Fetch failed");
 }
 
-async function searchVideos(retry = true) {
-  const query = document.getElementById("query").value.trim();
+// 🔍 SEARCH
+async function searchVideos() {
+  const q = document.getElementById("query").value.trim();
   const results = document.getElementById("results");
-  const error = document.getElementById("error");
-  results.innerHTML = '';
-  error.textContent = '';
 
-  if(!query) return;
+  if (!q) return;
 
-  results.innerHTML = `<div class="loading"><i class="fa fa-spinner fa-spin"></i> Searching...</div>`;
+  results.innerHTML = `<i class="fa fa-spinner fa-spin"></i> Searching...`;
 
   try {
-    const api = `https://my-rest-apis-six.vercel.app/yts?query=${encodeURIComponent(query)}`;
-    const data = await fetchWithTimeout(api, 10000); // 10 sec timeout
+    const api = `https://my-rest-apis-six.vercel.app/yts?query=${encodeURIComponent(q)}`;
+    const data = await fetchSafe(api);
 
-    if(!data.results?.length){
-      results.innerHTML = '';
-      error.textContent = "❌ No results found";
-      return;
-    }
+    results.innerHTML = "";
 
-    results.innerHTML = '';
+    data.results.slice(0, 10).forEach(v => {
+      results.innerHTML += `
+        <div class="card">
+          <img src="${v.thumbnail}">
+          <p><b>${v.title}</b></p>
+          <p><i class="fa fa-user"></i> ${v.author}</p>
 
-    data.results.slice(0,10).forEach(video => {
-      const card = document.createElement("div");
-      card.className = "card";
+          <button onclick="download(this,'${v.url}','mp3')">
+            <i class="fa fa-music"></i> MP3
+          </button>
 
-      card.innerHTML = `
-        <img src="${video.thumbnail}" alt="${video.title}">
-        <div class="meta">
-          <p><b>${video.title}</b></p>
-          <p><i class="fa fa-user"></i> ${video.author}</p>
-          <p><i class="fa fa-clock"></i> ${video.duration}</p>
-        </div>
-        <div class="actions">
-          <button onclick="downloadMedia(this,'${video.url}','mp3')"><i class="fa fa-music"></i> MP3</button>
-          <button onclick="downloadMedia(this,'${video.url}','mp4')"><i class="fa fa-video"></i> MP4</button>
-        </div>
-        <div class="download-container">
-          <div class="download-bar">
-            <div class="download-fill"><i class="fa fa-wifi"></i> 0%</div>
+          <button onclick="download(this,'${v.url}','mp4')">
+            <i class="fa fa-video"></i> MP4
+          </button>
+
+          <div class="download-box">
+            <div class="bar">
+              <div class="fill"><i class="fa fa-wifi"></i> 0%</div>
+            </div>
           </div>
         </div>
       `;
-      results.appendChild(card);
     });
 
-  } catch(e){
-    if(retry){
-      console.log("Retrying search due to timeout...");
-      setTimeout(()=>searchVideos(false), 1500); // wait 1.5s then retry
-    } else {
-      results.innerHTML = '';
-      error.textContent = "❌ Search failed, please try again";
-      console.error(e);
-    }
+  } catch {
+    results.innerHTML = "❌ Search failed";
   }
 }
 
-async function downloadMedia(button,url,format){
-  const fill = button.closest('.card').querySelector('.download-fill');
-  fill.style.width = '0%';
-  fill.textContent = '0%';
+// 📥 DOWNLOAD WITH BAR
+async function download(btn, url, format) {
+  const fill = btn.closest('.card').querySelector('.fill');
 
-  try{
+  fill.style.width = "0%";
+  fill.innerHTML = `<i class="fa fa-wifi"></i> 0%`;
+
+  try {
     const api = `https://iamtkm.vercel.app/downloaders/yt${format}?apikey=tkm&url=${encodeURIComponent(url)}`;
-    const res = await fetch(api);
-    const data = await res.json();
+    const data = await fetchSafe(api);
 
-    if(data?.data?.url){
-      const dlUrl = data.data.url;
+    if (data?.data?.url) {
+      const dl = data.data.url;
+
       let progress = 0;
 
-      const interval = setInterval(()=>{
-        progress += Math.floor(Math.random()*10)+5;
-        if(progress>=100) progress=100;
-        fill.style.width = progress + '%';
+      const loader = setInterval(() => {
+        progress += 8;
+        if (progress > 100) progress = 100;
+
+        fill.style.width = progress + "%";
         fill.innerHTML = `<i class="fa fa-wifi"></i> ${progress}%`;
-        if(progress>=100){
-          clearInterval(interval);
-          const a = document.createElement('a');
-          a.href = dlUrl;
-          a.download = '';
+
+        if (progress === 100) {
+          clearInterval(loader);
+
+          const a = document.createElement("a");
+          a.href = dl;
+          a.download = "";
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
         }
-      }, 400); // slower to simulate fetch
+      }, 300);
+
     } else {
-      fill.innerHTML = '❌ Failed';
+      fill.innerHTML = "❌";
     }
 
-  } catch(e){
-    fill.innerHTML = '❌ Error';
-    console.error(e);
+  } catch (err) {
+    fill.innerHTML = "❌";
   }
 }
 
-// Auto search trending
-window.onload = ()=>{
+// AUTO LOAD
+window.onload = () => {
   document.getElementById("query").value = "trending music";
   searchVideos();
 };
-
-// Enter key triggers search
-document.getElementById("query").addEventListener("keydown", e=>{
-  if(e.key==="Enter") searchVideos();
-});
 </script>
+
 </body>
 </html>
