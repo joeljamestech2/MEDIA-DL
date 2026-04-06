@@ -3,79 +3,205 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JOEL XMD YT DOWNLOADER</title>
+<title>JOEL XMD | YouTube</title>
 
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
 <style>
-body {
-  margin: 0;
-  font-family: 'JetBrains Mono', monospace;
-  background: #000;
-  color: #fff;
-  padding: 1rem;
-  text-align: center;
-}
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Roboto', sans-serif;
+    background: #0f0f0f;
+    color: #fff;
+    padding-bottom: 70px; /* Space for bottom nav */
+  }
 
-.search-container {
-  display: flex;
-  background: #111;
-  border-radius: 30px;
-  padding: 8px;
-  max-width: 600px;
-  margin: auto;
-}
+  /* --- HEADER / SEARCH BAR --- */
+  header {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    background: #0f0f0f;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
 
-.search-input {
-  flex: 1;
-  border: none;
-  background: transparent;
-  color: #fff;
-  outline: none;
-}
+  .back-btn { margin-right: 20px; cursor: pointer; }
 
-.icon-button {
-  background: #222;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
+  .search-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: #222;
+    border-radius: 20px;
+    padding: 6px 15px;
+    margin-right: 10px;
+  }
 
-.results { margin-top: 20px; }
-.card { background: #111; padding: 10px; margin-bottom: 10px; border-radius: 10px; }
-.card img { width: 100%; border-radius: 6px; }
+  .search-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: #fff;
+    outline: none;
+    font-size: 16px;
+  }
 
-button {
-  margin-top: 5px;
-  padding: 5px 10px;
-  background: #00d9ff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
+  .header-icons { display: flex; align-items: center; gap: 15px; }
+
+  /* --- VIDEO LIST --- */
+  #results { margin-top: 5px; }
+
+  .card {
+    width: 100%;
+    margin-bottom: 25px;
+    cursor: pointer;
+  }
+
+  .thumb-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+  }
+
+  .card img.thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .timestamp {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+  }
+
+  .video-details {
+    display: flex;
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .avatar {
+    width: 40px;
+    height: 40px;
+    background: #333;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  .info { flex: 1; text-align: left; }
+
+  .video-title {
+    font-size: 15px;
+    font-weight: 500;
+    margin: 0 0 4px 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .meta {
+    font-size: 13px;
+    color: #aaa;
+    line-height: 1.4;
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .dl-btn {
+    flex: 1;
+    padding: 8px;
+    border-radius: 18px;
+    border: none;
+    background: #272727;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+  .dl-btn:active { background: #3f3f3f; }
+  .dl-btn.mp3 { color: #00d9ff; }
+
+  /* --- BOTTOM NAVIGATION --- */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 60px;
+    background: #0f0f0f;
+    border-top: 1px solid #222;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 100;
+  }
+
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #fff;
+    font-size: 10px;
+    text-decoration: none;
+  }
+
+  .nav-item .material-icons { font-size: 24px; margin-bottom: 2px; }
+  .nav-item.active { color: #fff; }
+  .nav-item .add-circle { font-size: 35px; }
+
 </style>
 </head>
 
 <body>
 
-<h2>JOEL XMD DOWNLOADER</h2>
-
-<div class="search-container">
-  <input id="query" class="search-input" placeholder="Search YouTube...">
-  <div class="icon-button" onclick="searchVideos()">
-    <span class="material-icons">search</span>
+<header>
+  <span class="material-icons back-btn">arrow_back</span>
+  <div class="search-container">
+    <input id="query" class="search-input" placeholder="Search YouTube" onkeypress="handleKey(event)">
+    <span class="material-icons" style="font-size: 20px; color: #aaa;" onclick="document.getElementById('query').value=''">close</span>
   </div>
-</div>
+  <div class="header-icons">
+    <span class="material-icons" onclick="searchVideos()">mic</span>
+    <span class="material-icons">more_vert</span>
+  </div>
+</header>
 
 <div id="results"></div>
 
+<nav class="bottom-nav">
+  <div class="nav-item active"><span class="material-icons">home</span>Home</div>
+  <div class="nav-item"><span class="material-icons">explore</span>Shorts</div>
+  <div class="nav-item"><span class="material-icons add-circle">add_circle_outline</span></div>
+  <div class="nav-item"><span class="material-icons">subscriptions</span>Subscriptions</div>
+  <div class="nav-item">
+    <div style="width:24px; height:24px; background:#444; border-radius:50%; margin-bottom:2px;"></div>
+    You
+  </div>
+</nav>
+
 <script>
-// 🔥 fallback system
+// --- YOUR ORIGINAL LOGIC ---
 const proxies = [
   url => url,
   url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
@@ -92,14 +218,17 @@ async function fetchSafe(url) {
   throw new Error("Fetch failed");
 }
 
-// 🔍 SEARCH
+function handleKey(e) {
+  if (e.key === "Enter") searchVideos();
+}
+
 async function searchVideos() {
   const q = document.getElementById("query").value.trim();
   const results = document.getElementById("results");
 
   if (!q) return;
 
-  results.innerHTML = "🔍 Searching...";
+  results.innerHTML = "<p style='padding:20px'>🔍 Searching...</p>";
 
   try {
     const api = `https://my-rest-apis-six.vercel.app/yts?query=${encodeURIComponent(q)}`;
@@ -110,45 +239,55 @@ async function searchVideos() {
     data.results.slice(0, 10).forEach(v => {
       results.innerHTML += `
         <div class="card">
-          <img src="${v.thumbnail}">
-          <p><b>${v.title}</b></p>
-          <p>${v.author}</p>
-          <button onclick="download('${v.url}','mp3')">MP3</button>
-          <button onclick="download('${v.url}','mp4')">MP4</button>
+          <div class="thumb-container">
+            <img class="thumbnail" src="${v.thumbnail}">
+            <div class="timestamp">${v.timestamp || '3:18'}</div>
+          </div>
+          <div class="video-details">
+            <div class="avatar">
+               <img src="https://ui-avatars.com/api/?name=${v.author}&background=random" />
+            </div>
+            <div class="info">
+              <p class="video-title">${v.title}</p>
+              <p class="meta">${v.author} • 3.3M views</p>
+              <div class="btn-group">
+                <button class="dl-btn mp3" onclick="download('${v.url}','mp3')">
+                  <span class="material-icons" style="font-size:16px">music_note</span> MP3
+                </button>
+                <button class="dl-btn" onclick="download('${v.url}','mp4')">
+                  <span class="material-icons" style="font-size:16px">videocam</span> MP4
+                </button>
+              </div>
+            </div>
+            <span class="material-icons" style="font-size:20px; color:#aaa;">more_vert</span>
+          </div>
         </div>
       `;
     });
 
   } catch {
-    results.innerHTML = "❌ Search failed";
+    results.innerHTML = "<p style='padding:20px'>❌ Search failed</p>";
   }
 }
 
-// 📥 DOWNLOAD (REAL FIX)
 async function download(url, format) {
   try {
     const api = `https://iamtkm.vercel.app/downloaders/yt${format}?apikey=tkm&url=${encodeURIComponent(url)}`;
-
     const data = await fetchSafe(api);
 
-    console.log(data); // debug
-
     if (data?.data?.url) {
-      // ✅ OPEN REAL FILE LINK
       window.open(data.data.url, "_blank");
     } else {
       alert("❌ No download link");
     }
-
   } catch (err) {
-    console.error(err);
     alert("❌ Download failed");
   }
 }
 
 // AUTO LOAD
 window.onload = () => {
-  document.getElementById("query").value = "trending music";
+  document.getElementById("query").value = "dancing amapiano beats";
   searchVideos();
 };
 </script>
