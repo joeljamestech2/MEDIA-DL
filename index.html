@@ -6,7 +6,7 @@
 <title>JOEL XMD YT DOWNLOADER</title>
 
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
 :root {
@@ -16,6 +16,8 @@
   --text-light: #eee;
   --btn-bg: #00d9ff;
   --btn-color: #000;
+  --bar-bg: #222;
+  --bar-fill: #00d9ff;
 }
 
 * { box-sizing: border-box; margin:0; padding:0; }
@@ -79,6 +81,7 @@ h1 {
   overflow: hidden;
   box-shadow: 0 0 20px rgba(0,217,255,0.2);
   transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
 }
 
 .card:hover {
@@ -118,22 +121,48 @@ button {
   font-weight: bold;
   cursor: pointer;
   transition: 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 button:hover {
   background: rgba(0,217,255,0.8);
 }
 
-.loading, .error {
+.error, .loading {
   text-align: center;
   margin: 20px;
   color: var(--neon-blue);
+  font-size: 0.9rem;
 }
 
-.audio-player, .video-player {
-  width: 100%;
-  margin-top: 10px;
-  border-radius: 8px;
+.download-bar {
+  height: 6px;
+  background: var(--bar-bg);
+  border-radius: 5px;
+  overflow: hidden;
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  font-size: 0.75rem;
+}
+
+.download-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--bar-fill);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 5px;
+  color: #000;
+  font-weight: bold;
+  border-radius: 5px;
+}
+
+.download-container {
+  margin-top: 5px;
 }
 </style>
 </head>
@@ -144,7 +173,7 @@ button:hover {
 <div class="search-container">
   <input id="query" class="search-input" placeholder="Search YouTube or paste URL">
   <div class="icon-button" onclick="searchVideos()">
-    <span class="material-icons">search</span>
+    <i class="fa fa-search"></i>
   </div>
 </div>
 
@@ -152,31 +181,26 @@ button:hover {
 <div id="error" class="error"></div>
 
 <script>
-const proxies = [
-  url => url,
-  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
-];
-
-async function fetchSafe(url) {
-  for (let p of proxies) {
-    try {
-      const res = await fetch(p(url));
-      if (!res.ok) continue;
-      return await res.json();
-    } catch {}
+async function fetchSafe(url){
+  try {
+    const res = await fetch(url);
+    if(!res.ok) throw new Error("Fetch failed");
+    return await res.json();
+  } catch(e){
+    throw e;
   }
-  throw new Error("Fetch failed");
 }
 
 async function searchVideos() {
   const q = document.getElementById("query").value.trim();
   const results = document.getElementById("results");
   const error = document.getElementById("error");
-
-  if (!q) return;
-
-  results.innerHTML = `<div class="loading">🔍 Searching...</div>`;
+  results.innerHTML = '';
   error.textContent = '';
+
+  if(!q) return;
+
+  results.innerHTML = `<div class="loading"><i class="fa fa-spinner fa-spin"></i> Searching...</div>`;
 
   try {
     const api = `https://my-rest-apis-six.vercel.app/yts?query=${encodeURIComponent(q)}`;
@@ -198,53 +222,73 @@ async function searchVideos() {
         <img src="${video.thumbnail}" alt="${video.title}">
         <div class="meta">
           <p><b>${video.title}</b></p>
-          <p>👤 ${video.author}</p>
-          <p>⏱ ${video.duration}</p>
+          <p><i class="fa fa-user"></i> ${video.author}</p>
+          <p><i class="fa fa-clock"></i> ${video.duration}</p>
         </div>
         <div class="actions">
-          <button onclick="downloadMedia('${video.url}','mp3')">MP3</button>
-          <button onclick="downloadMedia('${video.url}','mp4')">MP4</button>
+          <button onclick="downloadMedia(this,'${video.url}','mp3')"><i class="fa fa-music"></i> MP3</button>
+          <button onclick="downloadMedia(this,'${video.url}','mp4')"><i class="fa fa-video"></i> MP4</button>
         </div>
-        <audio class="audio-player" controls src="" hidden></audio>
-        <video class="video-player" controls src="" hidden></video>
+        <div class="download-container">
+          <div class="download-bar">
+            <div class="download-fill"><i class="fa fa-wifi"></i> 0%</div>
+          </div>
+        </div>
       `;
-
       results.appendChild(card);
     });
 
-  } catch(err){
-    console.error(err);
+  } catch(e){
     results.innerHTML = '';
     error.textContent = "❌ Search failed";
+    console.error(e);
   }
 }
 
-async function downloadMedia(url, format){
-  try {
+async function downloadMedia(button,url,format){
+  const fill = button.closest('.card').querySelector('.download-fill');
+  fill.style.width = '0%';
+  fill.textContent = '0%';
+
+  try{
     const api = `https://iamtkm.vercel.app/downloaders/yt${format}?apikey=tkm&url=${encodeURIComponent(url)}`;
-    const data = await fetchSafe(api);
+    const res = await fetch(api);
+    const data = await res.json();
 
     if(data?.data?.url){
-      // auto download
-      const a = document.createElement('a');
-      a.href = data.data.url;
-      a.download = '';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      alert(`Downloading: ${data.data.title}`);
+      const dlUrl = data.data.url;
+      let progress = 0;
+      fill.style.width = '0%';
+
+      // simulate progress
+      const interval = setInterval(()=>{
+        progress += Math.floor(Math.random()*10)+5;
+        if(progress>=100) progress=100;
+        fill.style.width = progress + '%';
+        fill.innerHTML = `<i class="fa fa-wifi"></i> ${progress}%`;
+        if(progress>=100){
+          clearInterval(interval);
+          // trigger download
+          const a = document.createElement('a');
+          a.href = dlUrl;
+          a.download = '';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+      }, 300);
     } else {
-      alert("❌ Download failed");
+      fill.innerHTML = '❌ Failed';
     }
 
-  } catch(err){
-    console.error(err);
-    alert("❌ Download failed");
+  } catch(e){
+    fill.innerHTML = '❌ Error';
+    console.error(e);
   }
 }
 
-// Auto search trending on load
-window.onload = () => {
+// Auto search trending
+window.onload = ()=>{
   document.getElementById("query").value = "trending music";
   searchVideos();
 };
