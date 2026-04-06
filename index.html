@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JOEL XMD YT DOWNLOADER</title>
+<title>JOEL XMD DOWNLOADER</title>
 
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -18,9 +18,7 @@ body {
   text-align: center;
 }
 
-h2 { margin-bottom: 20px; }
-
-.search-container {
+.search-box {
   display: flex;
   background: #111;
   border-radius: 30px;
@@ -29,7 +27,7 @@ h2 { margin-bottom: 20px; }
   margin: auto;
 }
 
-.search-input {
+.search-box input {
   flex: 1;
   border: none;
   background: transparent;
@@ -37,7 +35,7 @@ h2 { margin-bottom: 20px; }
   outline: none;
 }
 
-.icon-button {
+.icon-btn {
   background: #222;
   border-radius: 50%;
   width: 40px;
@@ -48,56 +46,54 @@ h2 { margin-bottom: 20px; }
   cursor: pointer;
 }
 
-.results { margin-top: 20px; }
 .card {
   background: #111;
+  margin-top: 15px;
   padding: 10px;
-  margin-bottom: 15px;
   border-radius: 12px;
   text-align: left;
-  position: relative;
 }
+
 .card img {
   width: 100%;
   border-radius: 6px;
 }
-.card p { margin: 5px 0; font-size: 0.9rem; }
 
 button {
-  margin: 5px 5px 0 0;
+  margin-top: 6px;
   padding: 6px 12px;
-  background: #00d9ff;
   border: none;
+  background: #00d9ff;
   border-radius: 6px;
   cursor: pointer;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: inherit;
 }
 
-.download-bar {
+.bar {
   height: 6px;
-  background: #00d9ff33;
+  background: #222;
+  margin-top: 5px;
   border-radius: 3px;
   overflow: hidden;
-  margin-top: 5px;
 }
-.download-progress {
+
+.progress {
   height: 100%;
   width: 0%;
   background: #00d9ff;
+  font-size: 10px;
   text-align: right;
   padding-right: 5px;
-  font-size: 0.7rem;
-  line-height: 6px;
 }
 </style>
 </head>
 <body>
 
-<h2>JOEL XMD YT DOWNLOADER</h2>
+<h2>JOEL XMD DOWNLOADER</h2>
 
-<div class="search-container">
-  <input id="query" class="search-input" placeholder="Search YouTube...">
-  <div class="icon-button" onclick="searchVideos()">
+<div class="search-box">
+  <input id="q" placeholder="Search...">
+  <div class="icon-btn" onclick="search()">
     <i class="fa fa-search"></i>
   </div>
 </div>
@@ -107,92 +103,89 @@ button {
 <script>
 const API_KEY = "stellar-GIuQCl96";
 
-// 🌐 fallback system
-const servers = [
-  q => `https://api.alyacore.xyz/search/yt?query=${encodeURIComponent(q)}&key=${API_KEY}`
-];
+// 🔍 SEARCH
+async function search() {
+  const q = document.getElementById("q").value.trim();
+  const resBox = document.getElementById("results");
 
-async function fetchSafe(urls) {
-  for (let u of urls) {
-    try {
-      const res = await fetch(u);
-      if (!res.ok) continue;
-      return await res.json();
-    } catch {}
-  }
-  throw new Error("Failed to fetch results");
-}
-
-async function searchVideos() {
-  const q = document.getElementById("query").value.trim();
-  const results = document.getElementById("results");
   if (!q) return;
-  results.innerHTML = '<p><i class="fa fa-spinner fa-spin"></i> Searching...</p>';
+
+  resBox.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Searching...';
 
   try {
-    const data = await fetchSafe(servers.map(fn => fn(q)));
-    results.innerHTML = "";
+    const res = await fetch(`https://api.alyacore.xyz/search/yt?query=${encodeURIComponent(q)}&key=${API_KEY}`);
+    const data = await res.json();
+
+    resBox.innerHTML = "";
 
     data.result.slice(0, 10).forEach(v => {
-      results.innerHTML += `
+      resBox.innerHTML += `
         <div class="card">
           <img src="${v.banner}">
           <p><b>${v.title}</b></p>
-          <p>${v.autor} • ${v.duration} • ${v.views} views • ${v.uploaded}</p>
-          <button onclick="downloadVideo('${v.url}','mp3', this)">MP3 <i class="fa fa-music"></i></button>
-          <button onclick="downloadVideo('${v.url}','mp4', this)">MP4 <i class="fa fa-video"></i></button>
-          <div class="download-bar"><div class="download-progress"><i class="fa fa-wifi"></i> 0%</div></div>
+          <p>${v.autor} • ${v.duration}</p>
+
+          <button onclick="download('${v.url}','mp3',this)">
+            <i class="fa fa-music"></i> MP3
+          </button>
+
+          <button onclick="download('${v.url}','mp4',this)">
+            <i class="fa fa-video"></i> MP4
+          </button>
+
+          <div class="bar">
+            <div class="progress"><i class="fa fa-wifi"></i> 0%</div>
+          </div>
         </div>
       `;
     });
 
-  } catch (err) {
-    console.error(err);
-    results.innerHTML = '<p>❌ Search failed</p>';
+  } catch {
+    resBox.innerHTML = "❌ Search failed";
   }
 }
 
-async function downloadVideo(url, format, btn) {
-  const progressBar = btn.parentElement.querySelector(".download-progress");
-  progressBar.style.width = "0%";
-  progressBar.textContent = "0%";
+// 📥 DOWNLOAD (FIXED)
+async function download(url, format, btn) {
+  const progress = btn.parentElement.querySelector(".progress");
 
-  const api = `https://iamtkm.vercel.app/downloaders/yt${format}?apikey=tkm&url=${encodeURIComponent(url)}`;
+  let percent = 0;
+
+  // fake smooth loading
+  const interval = setInterval(() => {
+    if (percent < 90) {
+      percent += 5;
+      progress.style.width = percent + "%";
+      progress.innerHTML = `<i class="fa fa-wifi"></i> ${percent}%`;
+    }
+  }, 200);
 
   try {
-    const res = await fetch(api);
-    const reader = res.body.getReader();
-    const contentLength = +res.headers.get("Content-Length") || 1000000; // fallback
-    let received = 0;
-
-    while(true) {
-      const {done, value} = await reader.read();
-      if(done) break;
-      received += value.length;
-      const percent = Math.min(100, Math.floor(received / contentLength * 100));
-      progressBar.style.width = percent + "%";
-      progressBar.textContent = `${percent}%`;
-    }
-
+    const res = await fetch(`https://iamtkm.vercel.app/downloaders/yt${format}?apikey=tkm&url=${encodeURIComponent(url)}`);
     const data = await res.json();
-    if(data?.data?.url) {
-      progressBar.style.width = "100%";
-      progressBar.textContent = "100%";
+
+    clearInterval(interval);
+
+    if (data?.data?.url) {
+      progress.style.width = "100%";
+      progress.innerHTML = `<i class="fa fa-wifi"></i> 100%`;
+
+      // open download
       window.open(data.data.url, "_blank");
     } else {
-      progressBar.textContent = "❌ Failed";
+      progress.innerHTML = "❌ Failed";
     }
 
   } catch (err) {
-    console.error(err);
-    progressBar.textContent = "❌ Error";
+    clearInterval(interval);
+    progress.innerHTML = "❌ Error";
   }
 }
 
-// auto load example
+// auto load
 window.onload = () => {
-  document.getElementById("query").value = "Yatapita";
-  searchVideos();
+  document.getElementById("q").value = "Yatapita";
+  search();
 };
 </script>
 
