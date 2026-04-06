@@ -181,15 +181,24 @@ button:hover {
 <div id="error" class="error"></div>
 
 <script>
-// Safe fetch wrapper
-async function fetchSafe(url){
-  const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-  const res = await fetch(proxy);
-  if(!res.ok) throw new Error("Fetch failed");
-  return await res.json();
+// Safe fetch with timeout
+async function fetchWithTimeout(url, timeout = 10000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+    const res = await fetch(proxy, { signal: controller.signal });
+    clearTimeout(id);
+    if (!res.ok) throw new Error("Fetch failed");
+    return await res.json();
+  } catch(e) {
+    clearTimeout(id);
+    throw e;
+  }
 }
 
-async function searchVideos() {
+async function searchVideos(retry = true) {
   const query = document.getElementById("query").value.trim();
   const results = document.getElementById("results");
   const error = document.getElementById("error");
@@ -202,7 +211,7 @@ async function searchVideos() {
 
   try {
     const api = `https://my-rest-apis-six.vercel.app/yts?query=${encodeURIComponent(query)}`;
-    const data = await fetchSafe(api);
+    const data = await fetchWithTimeout(api, 10000); // 10 sec timeout
 
     if(!data.results?.length){
       results.innerHTML = '';
@@ -237,9 +246,14 @@ async function searchVideos() {
     });
 
   } catch(e){
-    results.innerHTML = '';
-    error.textContent = "❌ Search failed";
-    console.error(e);
+    if(retry){
+      console.log("Retrying search due to timeout...");
+      setTimeout(()=>searchVideos(false), 1500); // wait 1.5s then retry
+    } else {
+      results.innerHTML = '';
+      error.textContent = "❌ Search failed, please try again";
+      console.error(e);
+    }
   }
 }
 
@@ -271,7 +285,7 @@ async function downloadMedia(button,url,format){
           a.click();
           document.body.removeChild(a);
         }
-      }, 300);
+      }, 400); // slower to simulate fetch
     } else {
       fill.innerHTML = '❌ Failed';
     }
@@ -287,7 +301,11 @@ window.onload = ()=>{
   document.getElementById("query").value = "trending music";
   searchVideos();
 };
-</script>
 
+// Enter key triggers search
+document.getElementById("query").addEventListener("keydown", e=>{
+  if(e.key==="Enter") searchVideos();
+});
+</script>
 </body>
 </html>
