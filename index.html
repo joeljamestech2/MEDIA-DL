@@ -6,8 +6,6 @@
 <title>JOEL XMD DOWNLOADER</title>
 
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
-
-<!-- ✅ Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
@@ -19,10 +17,8 @@ body {
   padding: 1rem;
   text-align: center;
 }
-
 h2 { color: #00d9ff; }
 
-/* SEARCH */
 .search-container {
   display: flex;
   background: #111;
@@ -31,7 +27,6 @@ h2 { color: #00d9ff; }
   max-width: 600px;
   margin: auto;
 }
-
 .search-input {
   flex: 1;
   border: none;
@@ -39,7 +34,6 @@ h2 { color: #00d9ff; }
   color: #fff;
   outline: none;
 }
-
 .icon-button {
   background: #00d9ff;
   border-radius: 50%;
@@ -52,7 +46,6 @@ h2 { color: #00d9ff; }
   color: #000;
 }
 
-/* CARD */
 .card {
   background: #111;
   padding: 12px;
@@ -60,12 +53,7 @@ h2 { color: #00d9ff; }
   border-radius: 15px;
   box-shadow: 0 0 10px #00d9ff22;
 }
-
-.card img {
-  width: 100%;
-  border-radius: 10px;
-}
-
+.card img { width: 100%; border-radius: 10px; }
 button {
   margin: 5px;
   padding: 8px 12px;
@@ -75,14 +63,8 @@ button {
   cursor: pointer;
 }
 
-/* STATUS */
-.status {
-  margin-top: 6px;
-  font-size: 12px;
-  color: #aaa;
-}
+.status { margin-top: 6px; font-size: 12px; color: #aaa; }
 
-/* DOWNLOAD BAR */
 .download-bar {
   width: 100%;
   height: 5px;
@@ -90,7 +72,6 @@ button {
   border-radius: 10px;
   margin-top: 6px;
 }
-
 .download-progress {
   height: 100%;
   width: 0%;
@@ -99,7 +80,6 @@ button {
 }
 </style>
 </head>
-
 <body>
 
 <h2><i class="fa fa-cloud-download-alt"></i> JOEL XMD</h2>
@@ -116,60 +96,46 @@ button {
 <script>
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-// 🔍 SEARCH (MATCHES YOUR API EXACTLY)
 async function searchVideos() {
   const q = document.getElementById("query").value.trim();
   const results = document.getElementById("results");
-
   if (!q) return;
 
   results.innerHTML = `<p><i class="fa fa-spinner fa-spin"></i> Searching...</p>`;
+  await sleep(300); // slight delay
 
   try {
-    await sleep(500); // ✅ prevent fast request fail
-
     const api = `https://my-rest-apis-six.vercel.app/yts?query=${encodeURIComponent(q)}`;
     const res = await fetch(api);
     const data = await res.json();
 
-    console.log(data); // debug
+    console.log(data);
 
-    if (!data.results || !Array.isArray(data.results)) {
-      throw new Error("Invalid API");
+    if (data.status !== "success" || !Array.isArray(data.results)) {
+      throw new Error("Invalid API structure");
     }
 
     results.innerHTML = "";
-
-    data.results.slice(0, 10).forEach(v => {
+    data.results.slice(0,10).forEach(v => {
       results.innerHTML += `
         <div class="card">
           <img src="${v.thumbnail}">
           <p><b>${v.title}</b></p>
           <p>${v.author}</p>
-
-          <button onclick="download(this,'${v.url}','mp3')">
-            <i class="fa fa-music"></i> MP3
-          </button>
-
-          <button onclick="download(this,'${v.url}','mp4')">
-            <i class="fa fa-video"></i> MP4
-          </button>
-
+          <button onclick="download(this,'${v.url}','mp3')"><i class="fa fa-music"></i> MP3</button>
+          <button onclick="download(this,'${v.url}','mp4')"><i class="fa fa-video"></i> MP4</button>
           <div class="status"></div>
-          <div class="download-bar">
-            <div class="download-progress"></div>
-          </div>
+          <div class="download-bar"><div class="download-progress"></div></div>
         </div>
       `;
     });
 
-  } catch (err) {
+  } catch(err) {
     console.error(err);
     results.innerHTML = `<p><i class="fa fa-wifi"></i> Failed to fetch results</p>`;
   }
 }
 
-// 📥 DOWNLOAD (MATCHES YOUR RESPONSE STRUCTURE)
 async function download(btn, url, format) {
   const card = btn.closest(".card");
   const status = card.querySelector(".status");
@@ -177,13 +143,11 @@ async function download(btn, url, format) {
 
   try {
     status.innerHTML = `<i class="fa fa-wifi fa-spin"></i> Fetching...`;
-
-    await sleep(1000);
+    await sleep(500);
 
     const api = `https://iamtkm.vercel.app/downloaders/yt${format}?apikey=tkm&url=${encodeURIComponent(url)}`;
     const res = await fetch(api);
     const data = await res.json();
-
     console.log(data);
 
     if (!data?.data?.url) {
@@ -198,18 +162,16 @@ async function download(btn, url, format) {
       if (p >= 100) clearInterval(interval);
     }, 150);
 
-    await sleep(2000);
-
+    await sleep(1500);
     status.innerHTML = `<i class="fa fa-check"></i> Opening`;
     window.open(data.data.url, "_blank");
 
-  } catch (err) {
+  } catch(err) {
     console.error(err);
     status.innerHTML = `<i class="fa fa-times"></i> Error`;
   }
 }
 
-// AUTO LOAD
 window.onload = () => {
   document.getElementById("query").value = "hi";
   searchVideos();
