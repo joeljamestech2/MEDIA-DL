@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JOEL XMD DOWNLOADER</title>
+<title>JOEL XMD YT DOWNLOADER</title>
 
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
 <style>
 body {
@@ -17,16 +17,18 @@ body {
   padding: 1rem;
   text-align: center;
 }
-h2 { color: #00d9ff; }
+
+h2 { margin-bottom: 20px; }
 
 .search-container {
   display: flex;
   background: #111;
-  border-radius: 50px;
-  padding: 10px;
+  border-radius: 30px;
+  padding: 8px;
   max-width: 600px;
   margin: auto;
 }
+
 .search-input {
   flex: 1;
   border: none;
@@ -34,55 +36,64 @@ h2 { color: #00d9ff; }
   color: #fff;
   outline: none;
 }
+
 .icon-button {
-  background: #00d9ff;
+  background: #222;
   border-radius: 50%;
-  width: 45px;
-  height: 45px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #000;
 }
 
+.results { margin-top: 20px; }
 .card {
   background: #111;
-  padding: 12px;
-  margin: 15px 0;
-  border-radius: 15px;
-  box-shadow: 0 0 10px #00d9ff22;
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 12px;
+  text-align: left;
+  position: relative;
 }
-.card img { width: 100%; border-radius: 10px; }
+.card img {
+  width: 100%;
+  border-radius: 6px;
+}
+.card p { margin: 5px 0; font-size: 0.9rem; }
+
 button {
-  margin: 5px;
-  padding: 8px 12px;
+  margin: 5px 5px 0 0;
+  padding: 6px 12px;
   background: #00d9ff;
   border: none;
-  border-radius: 20px;
+  border-radius: 6px;
   cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
 }
 
-.status { margin-top: 6px; font-size: 12px; color: #aaa; }
-
 .download-bar {
-  width: 100%;
-  height: 5px;
-  background: #222;
-  border-radius: 10px;
-  margin-top: 6px;
+  height: 6px;
+  background: #00d9ff33;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 5px;
 }
 .download-progress {
   height: 100%;
   width: 0%;
   background: #00d9ff;
-  transition: width 0.3s;
+  text-align: right;
+  padding-right: 5px;
+  font-size: 0.7rem;
+  line-height: 6px;
 }
 </style>
 </head>
 <body>
 
-<h2><i class="fa fa-cloud-download-alt"></i> JOEL XMD</h2>
+<h2>JOEL XMD YT DOWNLOADER</h2>
 
 <div class="search-container">
   <input id="query" class="search-input" placeholder="Search YouTube...">
@@ -94,86 +105,93 @@ button {
 <div id="results"></div>
 
 <script>
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const API_KEY = "stellar-GIuQCl96";
+
+// 🌐 fallback system
+const servers = [
+  q => `https://api.alyacore.xyz/search/yt?query=${encodeURIComponent(q)}&key=${API_KEY}`
+];
+
+async function fetchSafe(urls) {
+  for (let u of urls) {
+    try {
+      const res = await fetch(u);
+      if (!res.ok) continue;
+      return await res.json();
+    } catch {}
+  }
+  throw new Error("Failed to fetch results");
+}
 
 async function searchVideos() {
   const q = document.getElementById("query").value.trim();
   const results = document.getElementById("results");
   if (!q) return;
-
-  results.innerHTML = `<p><i class="fa fa-spinner fa-spin"></i> Searching...</p>`;
-  await sleep(300); // slight delay
+  results.innerHTML = '<p><i class="fa fa-spinner fa-spin"></i> Searching...</p>';
 
   try {
-    const api = `https://my-rest-apis-six.vercel.app/yts?query=${encodeURIComponent(q)}`;
-    const res = await fetch(api);
-    const data = await res.json();
-
-    console.log(data);
-
-    if (data.status !== "success" || !Array.isArray(data.results)) {
-      throw new Error("Invalid API structure");
-    }
-
+    const data = await fetchSafe(servers.map(fn => fn(q)));
     results.innerHTML = "";
-    data.results.slice(0,10).forEach(v => {
+
+    data.result.slice(0, 10).forEach(v => {
       results.innerHTML += `
         <div class="card">
-          <img src="${v.thumbnail}">
+          <img src="${v.banner}">
           <p><b>${v.title}</b></p>
-          <p>${v.author}</p>
-          <button onclick="download(this,'${v.url}','mp3')"><i class="fa fa-music"></i> MP3</button>
-          <button onclick="download(this,'${v.url}','mp4')"><i class="fa fa-video"></i> MP4</button>
-          <div class="status"></div>
-          <div class="download-bar"><div class="download-progress"></div></div>
+          <p>${v.autor} • ${v.duration} • ${v.views} views • ${v.uploaded}</p>
+          <button onclick="downloadVideo('${v.url}','mp3', this)">MP3 <i class="fa fa-music"></i></button>
+          <button onclick="downloadVideo('${v.url}','mp4', this)">MP4 <i class="fa fa-video"></i></button>
+          <div class="download-bar"><div class="download-progress"><i class="fa fa-wifi"></i> 0%</div></div>
         </div>
       `;
     });
 
-  } catch(err) {
+  } catch (err) {
     console.error(err);
-    results.innerHTML = `<p><i class="fa fa-wifi"></i> Failed to fetch results</p>`;
+    results.innerHTML = '<p>❌ Search failed</p>';
   }
 }
 
-async function download(btn, url, format) {
-  const card = btn.closest(".card");
-  const status = card.querySelector(".status");
-  const progress = card.querySelector(".download-progress");
+async function downloadVideo(url, format, btn) {
+  const progressBar = btn.parentElement.querySelector(".download-progress");
+  progressBar.style.width = "0%";
+  progressBar.textContent = "0%";
+
+  const api = `https://iamtkm.vercel.app/downloaders/yt${format}?apikey=tkm&url=${encodeURIComponent(url)}`;
 
   try {
-    status.innerHTML = `<i class="fa fa-wifi fa-spin"></i> Fetching...`;
-    await sleep(500);
-
-    const api = `https://iamtkm.vercel.app/downloaders/yt${format}?apikey=tkm&url=${encodeURIComponent(url)}`;
     const res = await fetch(api);
-    const data = await res.json();
-    console.log(data);
+    const reader = res.body.getReader();
+    const contentLength = +res.headers.get("Content-Length") || 1000000; // fallback
+    let received = 0;
 
-    if (!data?.data?.url) {
-      status.innerHTML = `<i class="fa fa-times"></i> Failed`;
-      return;
+    while(true) {
+      const {done, value} = await reader.read();
+      if(done) break;
+      received += value.length;
+      const percent = Math.min(100, Math.floor(received / contentLength * 100));
+      progressBar.style.width = percent + "%";
+      progressBar.textContent = `${percent}%`;
     }
 
-    let p = 0;
-    const interval = setInterval(() => {
-      p += 10;
-      progress.style.width = p + "%";
-      if (p >= 100) clearInterval(interval);
-    }, 150);
+    const data = await res.json();
+    if(data?.data?.url) {
+      progressBar.style.width = "100%";
+      progressBar.textContent = "100%";
+      window.open(data.data.url, "_blank");
+    } else {
+      progressBar.textContent = "❌ Failed";
+    }
 
-    await sleep(1500);
-    status.innerHTML = `<i class="fa fa-check"></i> Opening`;
-    window.open(data.data.url, "_blank");
-
-  } catch(err) {
+  } catch (err) {
     console.error(err);
-    status.innerHTML = `<i class="fa fa-times"></i> Error`;
+    progressBar.textContent = "❌ Error";
   }
 }
 
+// auto load example
 window.onload = () => {
-  document.getElementById("query").value = "hi";
+  document.getElementById("query").value = "Yatapita";
   searchVideos();
 };
 </script>
