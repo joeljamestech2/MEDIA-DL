@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JOEL XMD DOWNLOADER</title>
+<title>JOEL XMD YT DOWNLOADER</title>
 
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -18,94 +18,70 @@ body {
   text-align: center;
 }
 
-h2 {
-  margin-bottom: 20px;
-}
+h2 { margin-bottom: 20px; }
 
-.search-box {
+.search-container {
   display: flex;
   background: #111;
-  border-radius: 40px;
-  padding: 10px;
+  border-radius: 30px;
+  padding: 8px;
   max-width: 600px;
   margin: auto;
 }
 
-.search-box input {
+.search-input {
   flex: 1;
   border: none;
   background: transparent;
   color: #fff;
   outline: none;
-  font-size: 16px;
+  padding-left: 10px;
 }
 
-.icon-btn {
+.icon-button {
   background: #222;
   border-radius: 50%;
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
 }
 
-.card {
-  background: #111;
-  margin-top: 20px;
-  padding: 12px;
-  border-radius: 16px;
+.results { margin-top: 20px; }
+.card { 
+  background: #111; 
+  padding: 10px; 
+  margin-bottom: 10px; 
+  border-radius: 10px; 
   text-align: left;
-  box-shadow: 0 0 10px #00d9ff33;
 }
-
-.card img {
-  width: 100%;
-  border-radius: 10px;
+.card img { 
+  width: 100%; 
+  border-radius: 6px; 
 }
-
-.card p {
-  margin: 5px 0;
-  font-size: 14px;
-}
+.card-title { font-weight: bold; margin: 5px 0; }
+.card-author { color: #aaa; margin-bottom: 5px; }
 
 button {
-  margin-top: 8px;
-  margin-right: 5px;
-  padding: 8px 14px;
+  margin: 5px 5px 0 0;
+  padding: 5px 10px;
+  background: #00d9ff;
   border: none;
-  background: #00d9ff;
-  border-radius: 30px;
+  border-radius: 6px;
   cursor: pointer;
-  font-family: inherit;
-}
-
-.bar {
-  height: 6px;
-  background: #222;
-  margin-top: 8px;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.progress {
-  height: 100%;
-  width: 0%;
-  background: #00d9ff;
-  font-size: 10px;
-  text-align: right;
-  padding-right: 5px;
+  font-family: 'JetBrains Mono', monospace;
 }
 </style>
 </head>
+
 <body>
+<h2>JOEL XMD YT DOWNLOADER</h2>
 
-<h2>JOEL XMD DOWNLOADER</h2>
-
-<div class="search-box">
-  <input id="q" placeholder="Search YouTube...">
-  <div class="icon-btn" onclick="search()">
+<div class="search-container">
+  <input id="query" class="search-input" placeholder="Search YouTube...">
+  <div class="icon-button" onclick="searchVideos()">
     <i class="fa fa-search"></i>
   </div>
 </div>
@@ -113,99 +89,70 @@ button {
 <div id="results"></div>
 
 <script>
-const KEY = "stellar-GIuQCl96";
+// 🔍 SEARCH USING ALYACORE API
+async function searchVideos() {
+  const query = document.getElementById("query").value.trim();
+  const resultsDiv = document.getElementById("results");
+  if (!query) return;
 
-// 🔍 SEARCH FUNCTION
-async function search() {
-  const q = document.getElementById("q").value.trim();
-  const box = document.getElementById("results");
-
-  if (!q) return;
-
-  box.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Searching...';
+  resultsDiv.innerHTML = `<p><i class="fa fa-spinner fa-spin"></i> Searching...</p>`;
 
   try {
-    const res = await fetch(`https://api.alyacore.xyz/search/yt?query=${encodeURIComponent(q)}&key=${KEY}`);
+    const apiUrl = `https://api.alyacore.xyz/search/yt?query=${encodeURIComponent(query)}&key=stellar-GIuQCl96`;
+    const res = await fetch(apiUrl);
     const data = await res.json();
 
-    box.innerHTML = "";
+    if (!data.status || !data.result) {
+      resultsDiv.innerHTML = `<p>❌ Search failed</p>`;
+      return;
+    }
 
-    data.result.slice(0, 10).forEach(v => {
-      box.innerHTML += `
-        <div class="card">
-          <img src="${v.banner}">
-          <p><b>${v.title}</b></p>
-          <p>${v.autor} • ${v.duration} • ${v.views}</p>
+    resultsDiv.innerHTML = "";
 
-          <button onclick="download('${v.url}','mp3',this)">
-            <i class="fa fa-music"></i> MP3
-          </button>
+    data.result.slice(0, 10).forEach(video => {
+      const card = document.createElement("div");
+      card.className = "card";
 
-          <button onclick="download('${v.url}','mp4',this)">
-            <i class="fa fa-video"></i> MP4
-          </button>
-
-          <div class="bar">
-            <div class="progress"><i class="fa fa-wifi"></i> 0%</div>
-          </div>
-        </div>
+      card.innerHTML = `
+        <img src="${video.banner}" alt="${video.title}">
+        <p class="card-title">${video.title}</p>
+        <p class="card-author">${video.autor} • ${video.duration} • ${video.views} views • ${video.uploaded}</p>
+        <button onclick="download('${video.url}','mp3')"><i class="fa fa-music"></i> MP3</button>
+        <button onclick="download('${video.url}','mp4')"><i class="fa fa-video"></i> MP4</button>
       `;
+      resultsDiv.appendChild(card);
     });
 
   } catch (err) {
     console.error(err);
-    box.innerHTML = "❌ Search failed";
+    resultsDiv.innerHTML = `<p>❌ Search failed</p>`;
   }
 }
 
-// 📥 DOWNLOAD FUNCTION (FINAL FIX)
-async function download(url, type, btn) {
-  const progress = btn.parentElement.querySelector(".progress");
-
-  let p = 0;
-
-  // smooth loading animation
-  const loader = setInterval(() => {
-    if (p < 95) {
-      p += 5;
-      progress.style.width = p + "%";
-      progress.innerHTML = `<i class="fa fa-wifi"></i> ${p}%`;
-    }
-  }, 200);
-
+// 📥 DOWNLOAD USING TKM API
+async function download(url, format) {
   try {
-    const api = `https://iamtkm.vercel.app/downloaders/yt${type}?apikey=tkm&url=${encodeURIComponent(url)}`;
+    const apiUrl = `https://iamtkm.vercel.app/downloaders/yt${format}?apikey=tkm&url=${encodeURIComponent(url)}`;
+    const res = await fetch(apiUrl);
+    const data = await res.json();
 
-    const res = await fetch(api);
-    const json = await res.json();
-
-    clearInterval(loader);
-
-    if (json.status && json.data && json.data.url) {
-      const dl = json.data.url;
-
-      progress.style.width = "100%";
-      progress.innerHTML = `<i class="fa fa-wifi"></i> 100%`;
-
-      // ✅ REQUIRED METHOD
-      window.open(dl, "_blank");
-
+    if (data?.data?.url) {
+      // OPEN DOWNLOAD LINK IN NEW TAB
+      window.open(data.data.url, "_blank");
     } else {
-      progress.innerHTML = "❌ Failed";
+      alert("❌ Download link not found");
     }
-
-  } catch (e) {
-    clearInterval(loader);
-    progress.innerHTML = "❌ Error";
+  } catch (err) {
+    console.error(err);
+    alert("❌ Download failed");
   }
 }
 
-// auto load demo
+// AUTO LOAD TRENDING
 window.onload = () => {
-  document.getElementById("q").value = "Yatapita";
-  search();
+  document.getElementById("query").value = "trending music";
+  searchVideos();
 };
 </script>
-
 </body>
 </html>
