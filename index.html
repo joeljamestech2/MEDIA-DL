@@ -18,6 +18,10 @@ body {
   text-align: center;
 }
 
+h2 {
+  margin-bottom: 20px;
+}
+
 .search-box {
   display: flex;
   background: #111;
@@ -59,6 +63,11 @@ body {
 .card img {
   width: 100%;
   border-radius: 10px;
+}
+
+.card p {
+  margin: 5px 0;
+  font-size: 14px;
 }
 
 button {
@@ -106,7 +115,7 @@ button {
 <script>
 const KEY = "stellar-GIuQCl96";
 
-// 🔍 SEARCH
+// 🔍 SEARCH FUNCTION
 async function search() {
   const q = document.getElementById("q").value.trim();
   const box = document.getElementById("results");
@@ -121,12 +130,12 @@ async function search() {
 
     box.innerHTML = "";
 
-    data.result.slice(0,10).forEach(v => {
+    data.result.slice(0, 10).forEach(v => {
       box.innerHTML += `
         <div class="card">
           <img src="${v.banner}">
           <p><b>${v.title}</b></p>
-          <p>${v.autor} • ${v.duration}</p>
+          <p>${v.autor} • ${v.duration} • ${v.views}</p>
 
           <button onclick="download('${v.url}','mp3',this)">
             <i class="fa fa-music"></i> MP3
@@ -143,18 +152,19 @@ async function search() {
       `;
     });
 
-  } catch {
+  } catch (err) {
+    console.error(err);
     box.innerHTML = "❌ Search failed";
   }
 }
 
-// 📥 DOWNLOAD (CORRECT API USAGE)
+// 📥 DOWNLOAD FUNCTION (FINAL FIX)
 async function download(url, type, btn) {
   const progress = btn.parentElement.querySelector(".progress");
 
   let p = 0;
 
-  // smooth fake loading
+  // smooth loading animation
   const loader = setInterval(() => {
     if (p < 95) {
       p += 5;
@@ -172,14 +182,13 @@ async function download(url, type, btn) {
     clearInterval(loader);
 
     if (json.status && json.data && json.data.url) {
+      const dl = json.data.url;
+
       progress.style.width = "100%";
       progress.innerHTML = `<i class="fa fa-wifi"></i> 100%`;
 
-      // 🔥 IMPORTANT: use direct download link
-      const link = document.createElement("a");
-      link.href = json.data.url;
-      link.target = "_blank";
-      link.click();
+      // ✅ REQUIRED METHOD
+      window.open(dl, "_blank");
 
     } else {
       progress.innerHTML = "❌ Failed";
