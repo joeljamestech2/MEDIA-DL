@@ -181,29 +181,27 @@ button:hover {
 <div id="error" class="error"></div>
 
 <script>
+// Safe fetch wrapper
 async function fetchSafe(url){
-  try {
-    const res = await fetch(url);
-    if(!res.ok) throw new Error("Fetch failed");
-    return await res.json();
-  } catch(e){
-    throw e;
-  }
+  const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+  const res = await fetch(proxy);
+  if(!res.ok) throw new Error("Fetch failed");
+  return await res.json();
 }
 
 async function searchVideos() {
-  const q = document.getElementById("query").value.trim();
+  const query = document.getElementById("query").value.trim();
   const results = document.getElementById("results");
   const error = document.getElementById("error");
   results.innerHTML = '';
   error.textContent = '';
 
-  if(!q) return;
+  if(!query) return;
 
   results.innerHTML = `<div class="loading"><i class="fa fa-spinner fa-spin"></i> Searching...</div>`;
 
   try {
-    const api = `https://my-rest-apis-six.vercel.app/yts?query=${encodeURIComponent(q)}`;
+    const api = `https://my-rest-apis-six.vercel.app/yts?query=${encodeURIComponent(query)}`;
     const data = await fetchSafe(api);
 
     if(!data.results?.length){
@@ -258,9 +256,7 @@ async function downloadMedia(button,url,format){
     if(data?.data?.url){
       const dlUrl = data.data.url;
       let progress = 0;
-      fill.style.width = '0%';
 
-      // simulate progress
       const interval = setInterval(()=>{
         progress += Math.floor(Math.random()*10)+5;
         if(progress>=100) progress=100;
@@ -268,7 +264,6 @@ async function downloadMedia(button,url,format){
         fill.innerHTML = `<i class="fa fa-wifi"></i> ${progress}%`;
         if(progress>=100){
           clearInterval(interval);
-          // trigger download
           const a = document.createElement('a');
           a.href = dlUrl;
           a.download = '';
